@@ -46,14 +46,14 @@ async fn main(spawner: Spawner) {
     let p = embassy_nrf::init(config);
 
     unwrap!(spawner.spawn(reducer_task()));
-    unwrap!(spawner.spawn(button_task_0(p.P0_25.degrade())));
-    unwrap!(spawner.spawn(button_task_1(p.P1_08.degrade())));
-    unwrap!(spawner.spawn(button_task_2(p.P0_07.degrade())));
-    unwrap!(spawner.spawn(button_task_3(p.P0_26.degrade())));
-    unwrap!(spawner.spawn(button_task_4(p.P0_27.degrade())));
-    unwrap!(spawner.spawn(button_task_5(p.P0_06.degrade())));
-    unwrap!(spawner.spawn(button_task_6(p.P0_08.degrade())));
-    unwrap!(spawner.spawn(button_task_7(p.P1_09.degrade())));
+    unwrap!(spawner.spawn(button_task_7(p.P0_25.degrade())));
+    unwrap!(spawner.spawn(button_task_6(p.P1_08.degrade())));
+    unwrap!(spawner.spawn(button_task_5(p.P0_07.degrade())));
+    unwrap!(spawner.spawn(button_task_4(p.P0_26.degrade())));
+    unwrap!(spawner.spawn(button_task_3(p.P0_27.degrade())));
+    unwrap!(spawner.spawn(button_task_2(p.P0_06.degrade())));
+    unwrap!(spawner.spawn(button_task_1(p.P0_08.degrade())));
+    unwrap!(spawner.spawn(button_task_0(p.P1_09.degrade())));
     unwrap!(spawner.spawn(render_task(p.TWISPI0, p.P0_12, p.P0_11)));
     unwrap!(spawner.spawn(battery_task(p.SAADC, p.P0_29)));
 

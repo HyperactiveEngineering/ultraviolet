@@ -12,9 +12,17 @@ pub enum Action {
 static DISPATCH: Channel<ThreadModeRawMutex, Action, 8> = Channel::new();
 static SELECT: Channel<ThreadModeRawMutex, Store, 8> = Channel::new();
 
+#[derive(Debug, Format, Clone, PartialEq, Eq)]
+pub enum DefaultOptions {
+    ButtonDebugger,
+    Statistics,
+}
+
 #[derive(Debug, Format, Clone)]
 pub enum Route {
+    Default { selected: DefaultOptions },
     ButtonDebugger([bool; 8]),
+    Statistics,
 }
 
 #[derive(Debug, Format, Clone)]
@@ -25,7 +33,9 @@ pub struct Store {
 
 static STATE: Mutex<ThreadModeRawMutex, Store> = Mutex::new(Store {
     battery_voltage: 0.0,
-    route: Route::ButtonDebugger([false, false, false, false, false, false, false, false]),
+    route: Route::Default {
+        selected: DefaultOptions::Statistics,
+    },
 });
 
 impl Store {
@@ -44,11 +54,37 @@ impl Store {
             Action::BatteryVoltage(voltage) => {
                 self.battery_voltage = voltage;
             }
-            Action::ButtonPressed(button, state) => match self {
-                Self {
-                    battery_voltage: _,
-                    route: Route::ButtonDebugger(buttons),
-                } => {
+            Action::ButtonPressed(button, state) => match &mut self.route {
+                Route::Default { selected } => match selected {
+                    DefaultOptions::ButtonDebugger => {
+                        if button == Button::Select && state == ButtonState::Down {
+                            self.route = Route::ButtonDebugger(Default::default())
+                        }
+                        if button == Button::Down && state == ButtonState::Down {
+                            self.route = Route::Default {
+                                selected: DefaultOptions::Statistics,
+                            }
+                        }
+                    }
+                    DefaultOptions::Statistics => {
+                        if button == Button::Select && state == ButtonState::Down {
+                            self.route = Route::Statistics
+                        }
+                        if button == Button::Up && state == ButtonState::Down {
+                            self.route = Route::Default {
+                                selected: DefaultOptions::ButtonDebugger,
+                            }
+                        }
+                    }
+                },
+                Route::Statistics => {
+                    if button == Button::Back && state == ButtonState::Down {
+                        self.route = Route::Default {
+                            selected: DefaultOptions::Statistics,
+                        }
+                    }
+                }
+                Route::ButtonDebugger(buttons) => {
                     let index: usize = button.into();
                     let value = buttons[index];
                     let new_value: bool = state.into();

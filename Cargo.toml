@@ -9,6 +9,7 @@ test = false
 bench = false
 
 [dependencies]
+chrono = { version = "0.4.40", default-features = false, features = ["alloc"] }
 cortex-m = { version = "0.7.7", features = ["inline-asm"] }
 cortex-m-rt = "0.7.5"
 defmt = { version = "1.0.1", features = ["alloc"] }

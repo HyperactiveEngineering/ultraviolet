@@ -1,5 +1,7 @@
+use chrono::{TimeZone, Utc};
 use {
-    crate::store::{Route, Store},
+    crate::store::{DefaultOptions, Route, Store},
+    alloc::format,
     embassy_nrf::{
         bind_interrupts,
         interrupt::{self, InterruptExt, Priority},
@@ -29,6 +31,10 @@ bind_interrupts!(struct Irqs {
 
 #[embassy_executor::task]
 pub async fn render_task(twispi0: peripherals::TWISPI0, p0_12: P0_12, p0_11: P0_11) {
+    let source_date_epoch = Utc
+        .timestamp_opt(env!("SOURCE_DATE_EPOCH").parse::<i64>().unwrap(), 0)
+        .unwrap();
+
     interrupt::TWISPI0.set_priority(Priority::P3);
     let mut config = twim::Config::default();
     config.frequency = Frequency::K400;
@@ -44,20 +50,16 @@ pub async fn render_task(twispi0: peripherals::TWISPI0, p0_12: P0_12, p0_11: P0_
         .font(&FONT_6X10)
         .text_color(BinaryColor::On)
         .build();
+    let text_style_underlined = MonoTextStyleBuilder::new()
+        .font(&FONT_6X10)
+        .text_color(BinaryColor::On)
+        .underline()
+        .build();
     let textbox_style = TextBoxStyleBuilder::new()
         .height_mode(HeightMode::FitToText)
         .alignment(HorizontalAlignment::Justified)
         .paragraph_spacing(6)
         .build();
-
-    TextBox::with_textbox_style(
-        "Hello world!",
-        Rectangle::new(Point::zero(), Size::new(64, 0)),
-        text_style,
-        textbox_style,
-    )
-    .draw(&mut display)
-    .unwrap();
 
     display.flush().await.unwrap();
 
@@ -105,8 +107,35 @@ pub async fn render_task(twispi0: peripherals::TWISPI0, p0_12: P0_12, p0_11: P0_
             .unwrap();
 
         match state.route {
+            Route::Default { selected } => {
+                TextBox::with_textbox_style(
+                    "Button Debugger",
+                    Rectangle::new(Point::new(0, 8), Size::new(64, 0)),
+                    if selected == DefaultOptions::ButtonDebugger {
+                        text_style_underlined
+                    } else {
+                        text_style
+                    },
+                    textbox_style,
+                )
+                .draw(&mut display)
+                .unwrap();
+
+                TextBox::with_textbox_style(
+                    "Statistics",
+                    Rectangle::new(Point::new(0, 32), Size::new(64, 0)),
+                    if selected == DefaultOptions::Statistics {
+                        text_style_underlined
+                    } else {
+                        text_style
+                    },
+                    textbox_style,
+                )
+                .draw(&mut display)
+                .unwrap();
+            }
             Route::ButtonDebugger(buttons) => {
-                for (index, button) in buttons.iter().rev().enumerate() {
+                for (index, button) in buttons.iter().enumerate() {
                     Circle::new(Point::new(24, 16 * index as i32), 16)
                         .into_styled(if *button {
                             stroke_black_1px
@@ -116,6 +145,25 @@ pub async fn render_task(twispi0: peripherals::TWISPI0, p0_12: P0_12, p0_11: P0_
                         .draw(&mut display)
                         .unwrap();
                 }
+            }
+            Route::Statistics => {
+                TextBox::with_textbox_style(
+                    format!("battery: {:.2}v", state.battery_voltage).as_str(),
+                    Rectangle::new(Point::new(0, 8), Size::new(64, 0)),
+                    text_style,
+                    textbox_style,
+                )
+                .draw(&mut display)
+                .unwrap();
+
+                TextBox::with_textbox_style(
+                    format!("version: {}", source_date_epoch).as_str(),
+                    Rectangle::new(Point::new(0, 32), Size::new(64, 0)),
+                    text_style,
+                    textbox_style,
+                )
+                .draw(&mut display)
+                .unwrap();
             }
         }
 

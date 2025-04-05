@@ -5,19 +5,19 @@ use {
     embassy_time::Timer,
 };
 
-#[derive(Debug, Format)]
+#[derive(Debug, Format, PartialEq, Eq)]
 pub enum Button {
-    Zero,
-    One,
+    Select,
+    Back,
     Two,
     Three,
-    Four,
-    Five,
-    Six,
-    Seven,
+    Up,
+    Down,
+    Left,
+    Right,
 }
 
-#[derive(Debug, Format)]
+#[derive(Debug, Format, PartialEq, Eq)]
 pub enum ButtonState {
     Up,
     Down,
@@ -46,14 +46,14 @@ impl TryFrom<usize> for Button {
 
     fn try_from(value: usize) -> Result<Self, Self::Error> {
         match value {
-            0 => Ok(Self::Zero),
-            1 => Ok(Self::One),
+            0 => Ok(Self::Select),
+            1 => Ok(Self::Back),
             2 => Ok(Self::Two),
             3 => Ok(Self::Three),
-            4 => Ok(Self::Four),
-            5 => Ok(Self::Five),
-            6 => Ok(Self::Six),
-            7 => Ok(Self::Seven),
+            4 => Ok(Self::Up),
+            5 => Ok(Self::Down),
+            6 => Ok(Self::Left),
+            7 => Ok(Self::Right),
             _ => Err(()),
         }
     }
@@ -62,14 +62,14 @@ impl TryFrom<usize> for Button {
 impl From<Button> for usize {
     fn from(val: Button) -> Self {
         match val {
-            Button::Zero => 0,
-            Button::One => 1,
+            Button::Select => 0,
+            Button::Back => 1,
             Button::Two => 2,
             Button::Three => 3,
-            Button::Four => 4,
-            Button::Five => 5,
-            Button::Six => 6,
-            Button::Seven => 7,
+            Button::Up => 4,
+            Button::Down => 5,
+            Button::Left => 6,
+            Button::Right => 7,
         }
     }
 }
@@ -97,11 +97,11 @@ macro_rules! impl_button_task {
     };
 }
 
-impl_button_task!(button_task_0, Zero);
-impl_button_task!(button_task_1, One);
+impl_button_task!(button_task_0, Select);
+impl_button_task!(button_task_1, Back);
 impl_button_task!(button_task_2, Two);
 impl_button_task!(button_task_3, Three);
-impl_button_task!(button_task_4, Four);
-impl_button_task!(button_task_5, Five);
-impl_button_task!(button_task_6, Six);
-impl_button_task!(button_task_7, Seven);
+impl_button_task!(button_task_4, Up);
+impl_button_task!(button_task_5, Down);
+impl_button_task!(button_task_6, Left);
+impl_button_task!(button_task_7, Right);
