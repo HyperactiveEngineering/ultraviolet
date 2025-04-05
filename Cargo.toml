@@ -1,0 +1,27 @@
+[package]
+name = "ultraviolet"
+version = "0.1.0"
+edition = "2024"
+
+[[bin]]
+name = "ultraviolet"
+test = false
+bench = false
+
+[dependencies]
+cortex-m = { version = "0.7.7", features = ["inline-asm"] }
+cortex-m-rt = "0.7.5"
+defmt = { version = "1.0.1", features = ["alloc"] }
+defmt-rtt = "1.0.0"
+embassy-executor = { version = "0.7.0", features = ["arch-cortex-m", "executor-thread", "executor-interrupt", "defmt"] }
+embassy-futures = { version = "0.1.1", features = ["defmt"] }
+embassy-nrf = { version = "0.3.1", features = ["defmt", "nrf52840", "time-driver-rtc1", "gpiote", "time"] }
+embassy-sync = { version = "0.6.2", features = ["defmt"] }
+embassy-time = { version = "0.4.0", features = ["defmt", "defmt-timestamp-uptime"] }
+embedded-alloc = { version = "0.6.0", features = ["llff"] }
+embedded-graphics = { version = "0.8.1", features = ["defmt"] }
+embedded-text = "0.7.2"
+nrf-softdevice = { git = "https://github.com/embassy-rs/nrf-softdevice", rev = "bb1600b728c8acbaecf974741ee5867b472289f3", version = "0.1.0", features = ["ble-central", "ble-gatt-server", "ble-peripheral", "critical-section-impl", "defmt", "nrf52840", "s140"] }
+nrf-softdevice-s140 = { git = "https://github.com/embassy-rs/nrf-softdevice", rev = "bb1600b728c8acbaecf974741ee5867b472289f3", version = "0.1.2" }
+panic-probe = { version = "1.0.0", features = ["print-defmt"] }
+ssd1306 = { version = "0.10.0", features = ["async"] }

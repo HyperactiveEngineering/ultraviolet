@@ -1,0 +1,3 @@
+.cargo/*_license-agreement.txt linguist-vendored linguist-documentation
+.cargo/*_softdevice.hex linguist-vendored linguist-generated
+Cargo.lock linguist-generated
