@@ -5,11 +5,13 @@ extern crate alloc;
 extern crate defmt_rtt;
 extern crate panic_probe;
 
-mod store;
+mod route;
+mod state;
 mod task_battery;
 mod task_bluetooth;
 mod task_button;
 mod task_screen;
+mod task_store;
 
 use {
     core::mem,
@@ -18,7 +20,6 @@ use {
     embassy_nrf::{gpio::Pin, interrupt::Priority},
     embedded_alloc::LlffHeap as Heap,
     nrf_softdevice::{Softdevice, raw},
-    store::reducer_task,
     task_battery::battery_task,
     task_bluetooth::softdevice_task,
     task_button::{
@@ -26,6 +27,7 @@ use {
         button_task_6, button_task_7,
     },
     task_screen::render_task,
+    task_store::store_task,
 };
 
 #[global_allocator]
@@ -45,7 +47,7 @@ async fn main(spawner: Spawner) {
     config.time_interrupt_priority = Priority::P2;
     let p = embassy_nrf::init(config);
 
-    unwrap!(spawner.spawn(reducer_task()));
+    unwrap!(spawner.spawn(store_task()));
     unwrap!(spawner.spawn(button_task_7(p.P0_25.degrade())));
     unwrap!(spawner.spawn(button_task_6(p.P1_08.degrade())));
     unwrap!(spawner.spawn(button_task_5(p.P0_07.degrade())));

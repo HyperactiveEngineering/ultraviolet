@@ -1,5 +1,8 @@
 use {
-    crate::store::{DefaultOptions, Route, Store},
+    crate::{
+        route::{ButtonDebugger, Home, Route},
+        state::State,
+    },
     alloc::format,
     chrono::{TimeZone, Utc},
     embassy_nrf::{
@@ -76,17 +79,14 @@ pub async fn render_task(twispi0: peripherals::TWISPI0, p0_12: P0_12, p0_11: P0_
     let stroke_white_1px = PrimitiveStyle::with_stroke(BinaryColor::On, 1);
     let stroke_black_1px = PrimitiveStyle::with_stroke(BinaryColor::Off, 1);
 
-    let mut subscription = Store::subscribe();
+    let mut subscription = State::subscribe();
 
     loop {
-        let state = subscription.select_latest().await;
+        let state = subscription.latest().await;
 
         display.clear_buffer();
 
-        let v_min = 3.2;
-        let v_max = 4.2;
-        let v_battery = state.battery_voltage;
-        let v_percentage = ((v_battery - v_min) / (v_max - v_min)) * 100.0;
+        let v_percentage = state.battery_percentage();
 
         Rectangle::new(Point::new(64 - 16, 0), Size::new(16, 8))
             .into_styled(battery_border_style)
@@ -109,11 +109,11 @@ pub async fn render_task(twispi0: peripherals::TWISPI0, p0_12: P0_12, p0_11: P0_
             .unwrap();
 
         match state.route {
-            Route::Default { selected } => {
+            Route::Home(home) => {
                 TextBox::with_textbox_style(
                     "Button Debugger",
                     Rectangle::new(Point::new(0, 8), Size::new(64, 0)),
-                    if selected == DefaultOptions::ButtonDebugger {
+                    if home == Home::ButtonDebugger {
                         text_style_underlined
                     } else {
                         text_style
@@ -126,7 +126,7 @@ pub async fn render_task(twispi0: peripherals::TWISPI0, p0_12: P0_12, p0_11: P0_
                 TextBox::with_textbox_style(
                     "Statistics",
                     Rectangle::new(Point::new(0, 32), Size::new(64, 0)),
-                    if selected == DefaultOptions::Statistics {
+                    if home == Home::Statistics {
                         text_style_underlined
                     } else {
                         text_style
@@ -136,7 +136,7 @@ pub async fn render_task(twispi0: peripherals::TWISPI0, p0_12: P0_12, p0_11: P0_
                 .draw(&mut display)
                 .unwrap();
             }
-            Route::ButtonDebugger(buttons) => {
+            Route::ButtonDebugger(ButtonDebugger(buttons)) => {
                 for (index, button) in buttons.iter().enumerate() {
                     Circle::new(Point::new(24, 16 * index as i32), 16)
                         .into_styled(if *button {
@@ -148,9 +148,9 @@ pub async fn render_task(twispi0: peripherals::TWISPI0, p0_12: P0_12, p0_11: P0_
                         .unwrap();
                 }
             }
-            Route::Statistics => {
+            Route::Statistics(_) => {
                 TextBox::with_textbox_style(
-                    format!("battery: {:.2}v", state.battery_voltage).as_str(),
+                    format!("battery: {:.2}v", state.battery_voltage()).as_str(),
                     Rectangle::new(Point::new(0, 8), Size::new(64, 0)),
                     text_style,
                     textbox_style,

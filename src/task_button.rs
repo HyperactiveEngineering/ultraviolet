@@ -1,5 +1,8 @@
 use {
-    crate::store::{Action, Store},
+    crate::{
+        route::Route,
+        state::{Action, State},
+    },
     defmt::Format,
     embassy_nrf::gpio::{AnyPin, Input, Level, Pull},
     embassy_time::Timer,
@@ -87,10 +90,20 @@ macro_rules! impl_button_task {
             */
             loop {
                 input.wait_for_high().await;
-                Store::dispatch(Action::ButtonPressed(Button::$var, ButtonState::Down)).await;
+                Action::ButtonPressed {
+                    button: Button::$var,
+                    button_state: ButtonState::Down,
+                }
+                .dispatch()
+                .await;
                 Timer::after_millis(10).await;
                 input.wait_for_low().await;
-                Store::dispatch(Action::ButtonPressed(Button::$var, ButtonState::Up)).await;
+                Action::ButtonPressed {
+                    button: Button::$var,
+                    button_state: ButtonState::Up,
+                }
+                .dispatch()
+                .await;
                 Timer::after_millis(10).await;
             }
         }
@@ -105,3 +118,9 @@ impl_button_task!(button_task_4, Up);
 impl_button_task!(button_task_5, Down);
 impl_button_task!(button_task_6, Left);
 impl_button_task!(button_task_7, Right);
+
+impl State {
+    pub fn handle_button_pressed(&mut self, button: Button, button_state: ButtonState) {
+        Route::handle_button_pressed(self, button, button_state);
+    }
+}
