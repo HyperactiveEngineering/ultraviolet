@@ -1,7 +1,7 @@
-use chrono::{TimeZone, Utc};
 use {
     crate::store::{DefaultOptions, Route, Store},
     alloc::format,
+    chrono::{TimeZone, Utc},
     embassy_nrf::{
         bind_interrupts,
         interrupt::{self, InterruptExt, Priority},
@@ -76,8 +76,10 @@ pub async fn render_task(twispi0: peripherals::TWISPI0, p0_12: P0_12, p0_11: P0_
     let stroke_white_1px = PrimitiveStyle::with_stroke(BinaryColor::On, 1);
     let stroke_black_1px = PrimitiveStyle::with_stroke(BinaryColor::Off, 1);
 
+    let mut subscription = Store::subscribe();
+
     loop {
-        let state = Store::select().await;
+        let state = subscription.select_latest().await;
 
         display.clear_buffer();
 

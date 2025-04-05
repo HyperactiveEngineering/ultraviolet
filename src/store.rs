@@ -1,7 +1,12 @@
 use {
     crate::task_button::{Button, ButtonState},
     defmt::Format,
-    embassy_sync::{blocking_mutex::raw::ThreadModeRawMutex, channel::Channel, mutex::Mutex},
+    embassy_sync::{
+        blocking_mutex::raw::ThreadModeRawMutex,
+        channel::Channel,
+        mutex::Mutex,
+        watch::{Receiver, Watch},
+    },
 };
 
 pub enum Action {
@@ -10,7 +15,7 @@ pub enum Action {
 }
 
 static DISPATCH: Channel<ThreadModeRawMutex, Action, 8> = Channel::new();
-static SELECT: Channel<ThreadModeRawMutex, Store, 8> = Channel::new();
+static SELECT_LATEST: Watch<ThreadModeRawMutex, Store, 1> = Watch::new();
 
 #[derive(Debug, Format, Clone, PartialEq, Eq)]
 pub enum DefaultOptions {
@@ -38,13 +43,29 @@ static STATE: Mutex<ThreadModeRawMutex, Store> = Mutex::new(Store {
     },
 });
 
+pub struct Subscription<'a> {
+    receiver: Receiver<'a, ThreadModeRawMutex, Store, 1>,
+}
+
+impl<'a> Subscription<'a> {
+    fn new() -> Self {
+        Subscription {
+            receiver: SELECT_LATEST.receiver().unwrap(),
+        }
+    }
+
+    pub async fn select_latest(&mut self) -> Store {
+        self.receiver.changed().await
+    }
+}
+
 impl Store {
     pub async fn dispatch(action: Action) {
         DISPATCH.send(action).await
     }
 
-    pub async fn select() -> Store {
-        SELECT.receive().await
+    pub fn subscribe<'a>() -> Subscription<'a> {
+        Subscription::new()
     }
 }
 
@@ -102,10 +123,12 @@ impl Store {
 
 #[embassy_executor::task]
 pub async fn reducer_task() {
+    let sender = SELECT_LATEST.sender();
+
     loop {
         let action = DISPATCH.receive().await;
         let mut state = STATE.lock().await;
         state.next(action);
-        SELECT.send(state.clone()).await;
+        sender.send(state.clone());
     }
 }

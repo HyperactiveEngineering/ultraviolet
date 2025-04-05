@@ -80,9 +80,9 @@ async fn main(spawner: Spawner) {
             _bitfield_1: raw::ble_gap_cfg_role_count_t::new_bitfield_1(0),
         }),
         gap_device_name: Some(raw::ble_gap_cfg_device_name_t {
-            p_value: b"HelloRust" as *const u8 as _,
-            current_len: 9,
-            max_len: 9,
+            p_value: b"Ultraviolet" as *const u8 as _,
+            current_len: 11,
+            max_len: 11,
             write_perm: unsafe { mem::zeroed() },
             _bitfield_1: raw::ble_gap_cfg_device_name_t::new_bitfield_1(
                 raw::BLE_GATTS_VLOC_STACK as u8,
